@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+  
+  
+    
+    
+  <script src="/lib/pace/pace.min.js?v=1.0.2"></script>
+  <link href="/lib/pace/pace-theme-flash.min.css?v=1.0.2" rel="stylesheet">
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Gaussian process," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="&amp;emsp; &amp;emsp; 高斯过程回归（Gaussian Process Regression）是一种结合先验进行回归分析的非参数概率模型。利用高斯过程可以优雅的实现小样本回归，并且能够让人直观的感受回归效果，尤其是其优美的分布特性引人入胜，在笔者看来，是一个不错的预测回归工具。&amp;emsp; &amp;emsp; 高斯过程在近几年也有不错的发展，关注到&amp;ensp;Raissi (2017) 提出一种利用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="高斯过程回归浅析">
+<meta property="og:url" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/index.html">
+<meta property="og:site_name" content="俗人尧">
+<meta property="og:description" content="&amp;emsp; &amp;emsp; 高斯过程回归（Gaussian Process Regression）是一种结合先验进行回归分析的非参数概率模型。利用高斯过程可以优雅的实现小样本回归，并且能够让人直观的感受回归效果，尤其是其优美的分布特性引人入胜，在笔者看来，是一个不错的预测回归工具。&amp;emsp; &amp;emsp; 高斯过程在近几年也有不错的发展，关注到&amp;ensp;Raissi (2017) 提出一种利用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1c.jpg">
+<meta property="og:image" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1d.jpg">
+<meta property="og:image" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.2.jpg">
+<meta property="og:image" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.3.jpg">
+<meta property="article:published_time" content="2020-07-02T04:25:17.000Z">
+<meta property="article:modified_time" content="2020-07-02T11:34:12.826Z">
+<meta property="article:author" content="YaoY">
+<meta property="article:tag" content="Gaussian process">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1c.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/07/02/高斯过程回归浅析/"/>
+
+
+
+
+
+  <title>高斯过程回归浅析 | 俗人尧</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">俗人尧</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            Search
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="Searching..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="YaoY">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="俗人尧">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">高斯过程回归浅析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-02T12:25:17+08:00">
+                2020-07-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Study/" itemprop="url" rel="index">
+                    <span itemprop="name">Study</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>&emsp; &emsp; 高斯过程回归（Gaussian Process Regression）是一种结合先验进行回归分析的非参数概率模型。利用高斯过程可以优雅的实现小样本回归，并且能够让人直观的感受回归效果，尤其是其优美的分布特性引人入胜，在笔者看来，是一个不错的预测回归工具。<br>&emsp; &emsp; 高斯过程在近几年也有不错的发展，关注到&ensp;Raissi (2017) 提出一种利用GPR绕过求解微分方程步骤，直接学习的方程中的系数的方法，可适用于例如扩散场求解等各种工程问题。本文将概述高斯过程核心理论，同时尝试代码实现利用高斯过程学习抛物线型微分方程的系数。<br><a id="more"></a><br>&emsp; &emsp; en 标题起的不太准，懒得改辽</p>
+<h2 id="1-高斯过程简介"><a href="#1-高斯过程简介" class="headerlink" title="1 高斯过程简介"></a>1 高斯过程简介</h2><p>&emsp; 本部分将谈到多维高斯分布，边缘分布与条件分布，以及高斯过程的个人理解。从熟悉的一维高斯分布容易扩展到二维以及多维的高斯分布，推导及相关性质不再赘述，可参考：</p>
+<ul>
+<li><a href="https://www.cnblogs.com/jermmyhsu/p/8251013.html" target="_blank" rel="noopener">多维高斯分布推导</a>  </li>
+</ul>
+<h3 id="1-1-多维高斯分布"><a href="#1-1-多维高斯分布" class="headerlink" title="1.1 多维高斯分布"></a>1.1 多维高斯分布</h3><p>&emsp; 无论是一维高斯分布还是多维高斯分布，其分布特性都由均值向量和协方差矩阵确定。假设向量 𝑋 服从均值为向量 𝜇，协方差矩阵为 𝐾 的高斯分布，本文记为：</p>
+<script type="math/tex; mode=display">X \sim \mathcal{N}(\mu, K)</script><p>&emsp; 上式中向量 𝑋 由随机变量组成（每一个随机变量都服从正态分布，因而随机变量的联合分布也是属于高斯分布的），均值向量 𝜇 描述的是向量 𝑋 的分布的期望，而协方差矩阵 𝐾 用以记录描述每个随机变量之间的关联，是一个对称的半正定矩阵:</p>
+<script type="math/tex; mode=display">K=\operatorname{Cov}\left(x_{i}, x_{j}\right)=E\left[\left(x_{i}-\mu_{i}\right)\left(x_{j}-\mu_{j}\right)\right]</script><h3 id="1-2-高斯分布的边缘与条件分布"><a href="#1-2-高斯分布的边缘与条件分布" class="headerlink" title="1.2 高斯分布的边缘与条件分布"></a>1.2 高斯分布的边缘与条件分布</h3><p>&emsp; 由于高斯过程回归会应用到贝叶斯公式计算后验概率，因此需要考虑随机变量的条件分布与边缘分布的计算。推导过程可参考：  </p>
+<ul>
+<li><a href="http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html" target="_blank" rel="noopener">Marginal and conditional distributions of multivariate normal distribution</a></li>
+<li><a href="https://blog.csdn.net/denalmighty/article/details/81090311" target="_blank" rel="noopener">边缘与条件分布推导</a>  </li>
+<li><a href="https://www.jiqizhixin.com/articles/2018-02-16" target="_blank" rel="noopener">贝叶斯计算推导（附录A）</a>  </li>
+</ul>
+<p>&emsp; 不出意外，高斯分布的条件分布与边缘分布仍然是高斯分布，这是最最最吸引笔者的地方，此外也贝叶斯推断变得容易求解。</p>
+<p>若假设随机变量 X, Y 的联合分布服从高斯分布:</p>
+<script type="math/tex; mode=display">\left[\begin{array}{l}
+X \\
+Y
+\end{array}\right] \sim \mathcal{N}(\mu, K)=\mathcal{N}\left(\left[\begin{array}{l}
+\mu_{X} \\
+\mu_{Y}
+\end{array}\right],\left[\begin{array}{ll}
+K_{X X} & K_{X Y} \\
+K_{Y X} & K_{Y Y}
+\end{array}\right]\right)</script><p>那么条件概率的计算公式为：</p>
+<script type="math/tex; mode=display">X \mid Y \sim \mathcal{N}\left(\mu_{X}+K_{X Y} K_{Y Y}^{-1}\left(Y-\mu_{Y}\right), K_{X X}-K_{X Y} K_{Y Y}^{-1} K_{Y X}\right)</script><p>此时将联合概率分布对要边缘化的随机变量进行积分，可以计算出边缘概率分布：</p>
+<script type="math/tex; mode=display">p_{X}(x)=\int p_{X, Y}(x, y) d y=\int p_{X \mid Y}(x \mid y) p_{Y}(y) d y</script><p>由上式计算可得：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+X \sim \mathcal{N}\left(\mu_{X}, K_{X X}\right) \\
+Y \sim \mathcal{N}\left(\mu_{Y}, K_{Y Y}\right)
+\end{array}</script><h3 id="1-3-高斯过程概述"><a href="#1-3-高斯过程概述" class="headerlink" title="1.3 高斯过程概述"></a>1.3 高斯过程概述</h3><p>&emsp; 高斯过程可以看作是高斯分布从离散域到连续域的扩展，是一种由有限维度到无限维度的延伸。随着维度的升高，可以看作随机变量 X 由是由函数𝑓(𝑥) 采样得到的，那么原来的高斯分布就变为：</p>
+<script type="math/tex; mode=display">f(x)=\left[f\left(x_{1}\right), f\left(x_{1}\right), \ldots, f\left(x_{n}\right)\right] \sim \mathcal{N}\left(\mu_{x}, K_{x}\right)</script><p>若对于定义域内的所有的 𝑥∈𝐷 上式都成立则称 𝑓 是一个高斯过程，表示为：</p>
+<script type="math/tex; mode=display">f  \sim G \mathcal{P}(\mu(x), k(x, x))</script><p>上式中，𝜇(𝑥) 表示均值函数（Mean Function），𝑘(𝑥,𝑥) 为协方差函数（Covariance Function），常用核函数表示，本质上是描述随机变量之间相互影响的函数。</p>
+<h2 id="2-基于GPR的Raissi方法实现"><a href="#2-基于GPR的Raissi方法实现" class="headerlink" title="2 基于GPR的Raissi方法实现"></a>2 基于GPR的Raissi方法实现</h2><p>&emsp; 直接的高斯过程回归十分优雅，按照笔者的理解，这是一个利用采样信息去计算贝叶斯后验概率的过程。而关于普通的高斯过程回归（或者分类）的实现，无论是自己敲点代码还是利用如matlab工具箱、SKlearn等现成工具包，都能较为方便完成。直接的高斯过程回归的理解与实现可参考：</p>
+<ul>
+<li><a href="https://www.jgoertler.com/visual-exploration-gaussian-processes/" target="_blank" rel="noopener">高斯过程回归直观理解（推荐）</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html#" target="_blank" rel="noopener">SKlearn-GPR 官方文档（用SKlearn必读）</a></li>
+<li><a href="https://blog.dominodatalab.com/fitting-gaussian-process-models-python/" target="_blank" rel="noopener">自己coding可参考</a></li>
+</ul>
+<p>&emsp; 值得注意的是，直接的高斯过程回归可以进行核函数优化以得到更好的概率分布。而 Raissi 在 2017年提出利用参数优化过程结合高斯过程的分布特点，实现抛物线型微分方程参数的传递与求解的方法。下文将尝试实现这一方法。</p>
+<h3 id="2-1-核函数"><a href="#2-1-核函数" class="headerlink" title="2.1 核函数"></a>2.1 核函数</h3><p>&emsp;常见的基本核函数（kernel function）有径向基函数核、周期核、线性核、常数核等。这些核函数都有各自的特性，比如径向基函数核为平稳核，协方差矩阵只取决于随机变量的相对位置；周期核函数顾名思义具有周期性，协方差矩阵沿对角线将会出现规律性分布。本章采取的核函数为径向基函数核：</p>
+<script type="math/tex; mode=display">k_{u u}\left(x, x^{\prime} ; \theta\right)=\sigma^{2} \exp \left(-\frac{1}{2} \sum_{i=1}^{N} w_{i}\left(x_{i}-x_{i}^{\prime}\right)^{2}\right)</script><p>上式中, $\theta=\left(\sigma, w_{d}^{i}\right)$ 为核函数的超参数（hyper parameter），$w_{d}$ 为自动相关确定权重（Automatic Relevance Determination, 简称ARD）。直观上$w_{i}$ 影响高斯分布的平滑程度，超参数 σ 将影响高斯分布与均值之间的距离.  </p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1c.jpg"> <img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1d.jpg">
+</div>
+
+<p>&emsp;如图，淡蓝色区间为高斯过程的置信区间，蓝色实现为高斯过程的均值分布。可以看出随着$w_{i}$的增加，高斯过程更加平滑；随着超参数σ的减小，高斯过程分布更加集中。<br>&emsp; 利用高斯过程在贝叶斯最大化后验概率中学习超参数的值，该方法采用L-BFGS算法求解对数边缘似然的最大值，也就是：</p>
+<script type="math/tex; mode=display">\max \left\{\log p(y \mid \phi, \theta)=\frac{1}{2} \log |K|+\frac{1}{2} y^{T} K^{-1} y+\frac{N}{2} \log (2 \pi)\right\}</script><p>&emsp; 需要说明的是，后验概率随超参数的分布是一个非凸问题，如果优化初值设置不合理，会陷入局部最优，且在没有先验知识的情况下难以对超参数的初值进行估计与调整，目前常用的有效方法还是通过改变初值重复计算来尽量找寻最优解。此时观察可知，核函数 K 的计算是整个问题的核心所在。</p>
+<h3 id="2-2-一维扩散方程"><a href="#2-2-一维扩散方程" class="headerlink" title="2.2 一维扩散方程"></a>2.2 一维扩散方程</h3><p>由菲克定律，渗透扩散问题的线性偏微分微分方程的形式为：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+f(x, t)=\mathcal{L}_{x}^{D} u=0 \\
+\mathcal{L}_{x}^{D}=\frac{\partial}{\partial t}-D \frac{\partial^{2}}{\partial x^{2}}
+\end{array}</script><p>若假设函数 𝑢 是一个高斯过程：</p>
+<script type="math/tex; mode=display">u \sim \mathcal{G} \mathcal{P}\left(\mu(x)=0, k_{u u}(x, x)\right)</script><p>那么函数 𝑢 经过线性过程得到的函数 𝑓(𝑥,𝑡) 也是一个高斯过程：</p>
+<script type="math/tex; mode=display">f \sim \mathcal{G} \mathcal{P}\left(\mu(x)=0, k_{f f}(x, x)\right)</script><p>核函数 $k_{u u}(x, x)$ 与核函数 $k_{f f}(x, x)$ 之间的关系为：</p>
+<script type="math/tex; mode=display">k_{f f}(x 1, x 2)=\mathcal{L}_{x 1}^{D} \mathcal{L}_{x 2}^{D} k_{u u}(x 1, x 2)</script><p>$k_{f f}(x, x)$描述了函数 𝑓 与函数 𝑓 之间的分布关系，同样的函数 𝑓 与函数 𝑢 的关系，函数 𝑢 与函数 𝑓 的关系可以表示为：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+k_{f u}(x 1, x 2)=\mathcal{L}_{x 1}^{D} k_{u u}(x 1, x 2) \\
+k_{u f}(x 1, x 2)=\mathcal{L}_{x 2}^{D} k_{u u}(x 1, x 2)
+\end{array}</script><p>此时考虑函数 𝑓 与函数 𝑢 的联合分布𝑋=[𝑓,𝑢]，𝑋服从高斯分布，其协方差矩阵为：</p>
+<script type="math/tex; mode=display">K=\left[\begin{array}{cc}
+k_{u u}+\sigma_{u} & k_{u f} \\
+k_{f u} & k_{f f}+\sigma_{f}
+\end{array}\right]</script><p>其中，$\sigma_{u}$、$\sigma_{f}$ 为函数 𝑢 与函数 𝑓 的采样噪声估计，不难看出，若 $k_{u u}$采用上述的径向基核函数，那么上式的超参数为：</p>
+<script type="math/tex; mode=display">\theta=\left(D, \sigma, w_{i}, \sigma_{u,}, \sigma_{f}\right)</script><p>至此，计算得到了一维扩散问题的核函数K，结合上一节，通过超参数优化过程，可以求解最合理的扩散系数D，完成扩散方程的参数学习。</p>
+<h3 id="2-3-处理细节"><a href="#2-3-处理细节" class="headerlink" title="2.3 处理细节"></a>2.3 处理细节</h3><p>&emsp; 到目前为止，理论上能够计算抛物线型微分方程中的系数，但是离代码实现与工程应用还有两点细节处理，一个是核函数的代码计算方式在参数传递之后变得尤为复杂，另一个是回归过程的采样数据难以获取（很难测得渗透内部的时刻浓度）。</p>
+<h4 id="2-3-1-理论模型修改"><a href="#2-3-1-理论模型修改" class="headerlink" title="2.3.1 理论模型修改"></a>2.3.1 理论模型修改</h4><p>&emsp; 用 Fick定律进行分析对原微分方程进行改造以适合工程实际。</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+\because J=-D \frac{\partial C}{\partial x} \quad \therefore \quad \frac{\partial J}{\partial t}=-D \frac{\partial^{2} C}{\partial x \partial t} \\
+\therefore \quad \frac{\partial^{2} J}{\partial x^{2}}=\frac{\partial}{\partial x}\left(\frac{\partial J}{\partial x}\right)=\frac{\partial}{\partial x}\left(-D \frac{\partial^{2} C}{\partial x^{2}}\right)
+\end{array}</script><p>带入Fick第二定律中有：</p>
+<script type="math/tex; mode=display">\frac{\partial^{2} J}{\partial x^{2}}=\frac{\partial}{\partial x}\left(-D \frac{1}{D} \frac{\partial C}{\partial t}\right)=-\frac{\partial^{2} C}{\partial x \partial t}</script><p>对比可以得到：</p>
+<script type="math/tex; mode=display">\frac{\partial J}{\partial t}-D \frac{\partial^{2} J}{\partial x^{2}}=0</script><p>此时，原微分方程转化为：</p>
+<script type="math/tex; mode=display">\mathcal{L}_{x}^{D}=\frac{\partial}{\partial t}-D \frac{\partial^{2}}{\partial x^{2}} \quad u=J</script><p>&emsp;工程实际中，出口的渗透速率容易测量，此时整个扩散问题的处理方法才具备应用价值。</p>
+<h4 id="2-3-2-核函数计算"><a href="#2-3-2-核函数计算" class="headerlink" title="2.3.2 核函数计算"></a>2.3.2 核函数计算</h4><p>&emsp;笔者在代码实现过程中，尝试过用计算微分的函数包简化核函数计算，遗憾未实现（看官有好的建议一定一定告诉我！），故而一定程度上简化原核函数并采取暴力计算，公式推导结果如下：</p>
+<script type="math/tex; mode=display">k_{u u}=\sigma^{2} \exp \left(-\frac{d^{2}}{2 l_{x, t}^{2}}\right)=k, d^{2}=\left(x-x^{\prime}\right)^{2}+\left(t-t^{\prime}\right)^{2}</script><script type="math/tex; mode=display">\left\{\begin{array}{c}
+k_{u f}=\frac{\partial k}{\partial t^{\prime}}-D \frac{\partial^{2} k}{\partial x^{\prime 2}} \\
+k_{f u}=\frac{\partial k}{\partial t}-D \frac{\partial^{2} k}{\partial x^{2}} \\
+k_{f f}=\frac{\partial^{2} k}{\partial t \partial t^{\prime}}-D\left(\frac{\partial^{3} k}{\partial x^{2} \partial t^{\prime}}+\frac{\partial^{3} k}{\partial x^{\prime 2} \partial t}\right)+D^{2} \frac{\partial^{4} k}{\partial x^{2} \partial x^{\prime 2}}
+\end{array}\right.</script><p>上述式子中，笔者计算的各阶偏导数为：</p>
+<script type="math/tex; mode=display">\frac{\partial k}{\partial t}=-\frac{\partial k}{\partial t^{\prime}}=-k \frac{t-t^{\prime}}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{2} k}{\partial x^{2}}=\frac{\partial^{2} k}{\partial x^{\prime 2}}=k\left(\frac{x-x^{\prime}}{l_{x}^{2}}\right)^{2}-\frac{k}{l_{x}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{2} k}{\partial t \partial t^{\prime}}=-k\left(\frac{t-t^{\prime}}{l_{t}^{2}}\right)^{2}+\frac{k}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{3} k}{\partial x^{2} \partial t^{\prime}}=-\frac{\partial^{3} k}{\partial x^{\prime 2} \partial t}=k\left[\left(\frac{x-x^{\prime}}{l_{x}^{2}}\right)^{2}-\frac{1}{l_{x}^{2}}\right] \frac{t-t^{\prime}}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{4} k}{\partial x^{2} \partial x^{\prime 2}}=k\left[\frac{\left(x-x^{\prime}\right)^{4}}{l_{x}^{6}}-\frac{6\left(x-x^{\prime}\right)^{2}}{l_{x}^{6}}+\frac{3}{l_{x}^{6}}\right]</script><p>此时，超参数为：$\theta=\left(D, \sigma, l_{x}, l_{t}, \sigma_{u, f}\right)$</p>
+<h3 id="2-4-代码实现结果"><a href="#2-4-代码实现结果" class="headerlink" title="2.4 代码实现结果"></a>2.4 代码实现结果</h3><p>&emsp;笔者迁移 sklearn 中高斯过程的实现模式，模仿其接口风格，完成了适用于RBF核为基本核，线性算子为上文中 $\mathcal{L}_{x}^{D}$ 的高斯过程回归(二维)。代码整理后将发布到 github，或者欢迎邮件联系。</p>
+<h4 id="2-4-1-超参数取值空间优化"><a href="#2-4-1-超参数取值空间优化" class="headerlink" title="2.4.1 超参数取值空间优化"></a>2.4.1 超参数取值空间优化</h4><p>&emsp; 前文已述，超参数优化是个非凸问题，而核函数计算又比较复杂，初值选取不当很容易导致优化问题无解，所以笔者先用控制变量法手动调节超参数学习初始值，凭借一定经验判断较为合理的超参数优化区间，如下图可观察优化过程：</p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.2.jpg">  
+</div>
+
+<p>图中（a）到（b）优化了长度尺寸超参数 $𝑙_{𝑥}$ ，由（b）到（c）优化了时间尺寸超参数 $𝑙_{𝑡}$ ，由（c）到（d）优化了增益 𝜎 与噪声评价超参数 $\sigma_{u, f}$。如图可见，随着超参数优化区间的调整，拟合曲面逐渐平坦且合理，虽然依照经验调整无法达到最优区间甚至导致过拟合，但是作为超参数的取值区间，只要后续超参数优化时不碰到区间边界即可减少主观影响。超参数优化过程可继续深入研究。</p>
+<h4 id="2-4-2-高斯过程预测"><a href="#2-4-2-高斯过程预测" class="headerlink" title="2.4.2 高斯过程预测"></a>2.4.2 高斯过程预测</h4><p>&emsp; 高斯过程回归经过参数优化之后，能够对核函数影响区间内的采样点做出预测，预测原理为通过训练点计算后验概率，若只关注微分方程中的系数其实不用进行预测，但是高斯过程预测能够直观观察回归情况，计算方式为：</p>
+<script type="math/tex; mode=display">u_{p} \sim \mathcal{N}\left(\bar{u}_{p}, s_{u}^{2}\right)</script><script type="math/tex; mode=display">\bar{u}_{p}=P K^{-1} Y, \quad s_{u}^{2}=k_{u u}\left(x_{p}, x_{p}\right)-P K^{-1} P^{T}</script><p>式中：$P=\left[k_{u u}\left(x_{p}, x_{u}\right) \quad k_{u f}\left(x_{p}, x_{f}\right)\right]$ ,&emsp;$Y=\left[u\left(x_{u}\right) f\left(x_{f}\right)\right]$</p>
+<p>&emsp;通过差分仿真获取微分方程理论数据进行回归对比，随机采样扩散前期数据（40 points）进行学习，得到的回归预测分布如图：</p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.3.jpg">  
+</div>
+
+<p>图中微分方程系数的学习误差为 3.7%，有不错的精度。</p>
+<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>&emsp;直接的高斯过程回归目前已经发展的相对成熟，应用范围广，主要是形式好看十分吸引笔者。此处推荐两本相对容易入门的书（我也只看了一点）  </p>
+<p><em>推荐阅读</em><br><em>C.E. Rasmussen. Gaussian processes in machine learning.</em><br><em>K.P. Murphy. Machine learning: a probabilistic perspective.</em>  </p>
+<p>&emsp;按照论文，笔者基本实现Raissi方法。由于初值选取有点玄，我调参经验也不是很足，不能达到Raissi（2017）中同样方程的精度，此外有以下不足：  </p>
+<ul>
+<li>计算精度严重依赖初值，并且容易陷入局部最优，奇异矩阵中断求解等情况。Raissi在文中也提到采用合适的数据能得到很好的处理结果。所以我对这种方法的工程实际应用存疑，对论文中极其理想的结果也有一定怀疑。  </li>
+<li>对于不同的方程，核函数的计算要重新构造，需要新的计算方式简化核函数的微分。</li>
+<li>直接的高斯过程能够实现采样点覆盖范围内的预测，但是在远离采样的地方，难以影响协方差矩阵，笔者认为原理上是不能实现有效预测的，要实现前期样本预测后期数据分布等功能，需要加入如Raissi方法依赖的微分方程等先验知识。</li>
+</ul>
+<p>此外，高斯过程计算空间复杂度较高，实现大样本的高斯过程回归有助于提高模型稳定性，可继续研究。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Gaussian-process/" rel="tag"># Gaussian process</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/01/hello-world/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">YaoY</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives">
+              
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+            <div class="links-of-author motion-element">
+                
+                  <span class="links-of-author-item">
+                    <a href="https://github.com/simon142857" target="_blank" title="GitHub">
+                      
+                        <i class="fa fa-fw fa-github"></i>GitHub</a>
+                  </span>
+                
+                  <span class="links-of-author-item">
+                    <a href="mailto:simonyy@hust.edu.cn" target="_blank" title="E-Mail">
+                      
+                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
+                  </span>
+                
+            </div>
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-高斯过程简介"><span class="nav-number">1.</span> <span class="nav-text">1 高斯过程简介</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-多维高斯分布"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 多维高斯分布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-高斯分布的边缘与条件分布"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 高斯分布的边缘与条件分布</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-高斯过程概述"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 高斯过程概述</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-基于GPR的Raissi方法实现"><span class="nav-number">2.</span> <span class="nav-text">2 基于GPR的Raissi方法实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-核函数"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 核函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-一维扩散方程"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 一维扩散方程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-处理细节"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 处理细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-1-理论模型修改"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.3.1 理论模型修改</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-3-2-核函数计算"><span class="nav-number">2.3.2.</span> <span class="nav-text">2.3.2 核函数计算</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-4-代码实现结果"><span class="nav-number">2.4.</span> <span class="nav-text">2.4 代码实现结果</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-1-超参数取值空间优化"><span class="nav-number">2.4.1.</span> <span class="nav-text">2.4.1 超参数取值空间优化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-2-高斯过程预测"><span class="nav-number">2.4.2.</span> <span class="nav-text">2.4.2 高斯过程预测</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-总结"><span class="nav-number">3.</span> <span class="nav-text">3. 总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YaoY</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i> 1
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+  
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+        }
+      });
+    </script>
+
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for (i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+      });
+    </script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  
+
+
+  
+
+  
+
+</body>
+</html>

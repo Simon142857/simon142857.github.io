@@ -1,20 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>高斯过程回归浅析</title>
+    <url>/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/</url>
+    <content><![CDATA[<p>&emsp; &emsp; 高斯过程回归（Gaussian Process Regression）是一种结合先验进行回归分析的非参数概率模型。利用高斯过程可以优雅的实现小样本回归，并且能够让人直观的感受回归效果，尤其是其优美的分布特性引人入胜，在笔者看来，是一个不错的预测回归工具。<br>&emsp; &emsp; 高斯过程在近几年也有不错的发展，关注到&ensp;Raissi (2017) 提出一种利用GPR绕过求解微分方程步骤，直接学习的方程中的系数的方法，可适用于例如扩散场求解等各种工程问题。本文将概述高斯过程核心理论，同时尝试代码实现利用高斯过程学习抛物线型微分方程的系数。<br><a id="more"></a><br>&emsp; &emsp; en 标题起的不太准，懒得改辽</p>
+<h2 id="1-高斯过程简介"><a href="#1-高斯过程简介" class="headerlink" title="1 高斯过程简介"></a>1 高斯过程简介</h2><p>&emsp; 本部分将谈到多维高斯分布，边缘分布与条件分布，以及高斯过程的个人理解。从熟悉的一维高斯分布容易扩展到二维以及多维的高斯分布，推导及相关性质不再赘述，可参考：</p>
+<ul>
+<li><a href="https://www.cnblogs.com/jermmyhsu/p/8251013.html" target="_blank" rel="noopener">多维高斯分布推导</a>  </li>
+</ul>
+<h3 id="1-1-多维高斯分布"><a href="#1-1-多维高斯分布" class="headerlink" title="1.1 多维高斯分布"></a>1.1 多维高斯分布</h3><p>&emsp; 无论是一维高斯分布还是多维高斯分布，其分布特性都由均值向量和协方差矩阵确定。假设向量 𝑋 服从均值为向量 𝜇，协方差矩阵为 𝐾 的高斯分布，本文记为：</p>
+<script type="math/tex; mode=display">X \sim \mathcal{N}(\mu, K)</script><p>&emsp; 上式中向量 𝑋 由随机变量组成（每一个随机变量都服从正态分布，因而随机变量的联合分布也是属于高斯分布的），均值向量 𝜇 描述的是向量 𝑋 的分布的期望，而协方差矩阵 𝐾 用以记录描述每个随机变量之间的关联，是一个对称的半正定矩阵:</p>
+<script type="math/tex; mode=display">K=\operatorname{Cov}\left(x_{i}, x_{j}\right)=E\left[\left(x_{i}-\mu_{i}\right)\left(x_{j}-\mu_{j}\right)\right]</script><h3 id="1-2-高斯分布的边缘与条件分布"><a href="#1-2-高斯分布的边缘与条件分布" class="headerlink" title="1.2 高斯分布的边缘与条件分布"></a>1.2 高斯分布的边缘与条件分布</h3><p>&emsp; 由于高斯过程回归会应用到贝叶斯公式计算后验概率，因此需要考虑随机变量的条件分布与边缘分布的计算。推导过程可参考：  </p>
+<ul>
+<li><a href="http://fourier.eng.hmc.edu/e161/lectures/gaussianprocess/node7.html" target="_blank" rel="noopener">Marginal and conditional distributions of multivariate normal distribution</a></li>
+<li><a href="https://blog.csdn.net/denalmighty/article/details/81090311" target="_blank" rel="noopener">边缘与条件分布推导</a>  </li>
+<li><a href="https://www.jiqizhixin.com/articles/2018-02-16" target="_blank" rel="noopener">贝叶斯计算推导（附录A）</a>  </li>
+</ul>
+<p>&emsp; 不出意外，高斯分布的条件分布与边缘分布仍然是高斯分布，这是最最最吸引笔者的地方，此外也贝叶斯推断变得容易求解。</p>
+<p>若假设随机变量 X, Y 的联合分布服从高斯分布:</p>
+<script type="math/tex; mode=display">\left[\begin{array}{l}
+X \\
+Y
+\end{array}\right] \sim \mathcal{N}(\mu, K)=\mathcal{N}\left(\left[\begin{array}{l}
+\mu_{X} \\
+\mu_{Y}
+\end{array}\right],\left[\begin{array}{ll}
+K_{X X} & K_{X Y} \\
+K_{Y X} & K_{Y Y}
+\end{array}\right]\right)</script><p>那么条件概率的计算公式为：</p>
+<script type="math/tex; mode=display">X \mid Y \sim \mathcal{N}\left(\mu_{X}+K_{X Y} K_{Y Y}^{-1}\left(Y-\mu_{Y}\right), K_{X X}-K_{X Y} K_{Y Y}^{-1} K_{Y X}\right)</script><p>此时将联合概率分布对要边缘化的随机变量进行积分，可以计算出边缘概率分布：</p>
+<script type="math/tex; mode=display">p_{X}(x)=\int p_{X, Y}(x, y) d y=\int p_{X \mid Y}(x \mid y) p_{Y}(y) d y</script><p>由上式计算可得：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+X \sim \mathcal{N}\left(\mu_{X}, K_{X X}\right) \\
+Y \sim \mathcal{N}\left(\mu_{Y}, K_{Y Y}\right)
+\end{array}</script><h3 id="1-3-高斯过程概述"><a href="#1-3-高斯过程概述" class="headerlink" title="1.3 高斯过程概述"></a>1.3 高斯过程概述</h3><p>&emsp; 高斯过程可以看作是高斯分布从离散域到连续域的扩展，是一种由有限维度到无限维度的延伸。随着维度的升高，可以看作随机变量 X 由是由函数𝑓(𝑥) 采样得到的，那么原来的高斯分布就变为：</p>
+<script type="math/tex; mode=display">f(x)=\left[f\left(x_{1}\right), f\left(x_{1}\right), \ldots, f\left(x_{n}\right)\right] \sim \mathcal{N}\left(\mu_{x}, K_{x}\right)</script><p>若对于定义域内的所有的 𝑥∈𝐷 上式都成立则称 𝑓 是一个高斯过程，表示为：</p>
+<script type="math/tex; mode=display">f  \sim G \mathcal{P}(\mu(x), k(x, x))</script><p>上式中，𝜇(𝑥) 表示均值函数（Mean Function），𝑘(𝑥,𝑥) 为协方差函数（Covariance Function），常用核函数表示，本质上是描述随机变量之间相互影响的函数。</p>
+<h2 id="2-基于GPR的Raissi方法实现"><a href="#2-基于GPR的Raissi方法实现" class="headerlink" title="2 基于GPR的Raissi方法实现"></a>2 基于GPR的Raissi方法实现</h2><p>&emsp; 直接的高斯过程回归十分优雅，按照笔者的理解，这是一个利用采样信息去计算贝叶斯后验概率的过程。而关于普通的高斯过程回归（或者分类）的实现，无论是自己敲点代码还是利用如matlab工具箱、SKlearn等现成工具包，都能较为方便完成。直接的高斯过程回归的理解与实现可参考：</p>
+<ul>
+<li><a href="https://www.jgoertler.com/visual-exploration-gaussian-processes/" target="_blank" rel="noopener">高斯过程回归直观理解（推荐）</a></li>
+<li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.gaussian_process.GaussianProcessRegressor.html#" target="_blank" rel="noopener">SKlearn-GPR 官方文档（用SKlearn必读）</a></li>
+<li><a href="https://blog.dominodatalab.com/fitting-gaussian-process-models-python/" target="_blank" rel="noopener">自己coding可参考</a></li>
+</ul>
+<p>&emsp; 值得注意的是，直接的高斯过程回归可以进行核函数优化以得到更好的概率分布。而 Raissi 在 2017年提出利用参数优化过程结合高斯过程的分布特点，实现抛物线型微分方程参数的传递与求解的方法。下文将尝试实现这一方法。</p>
+<h3 id="2-1-核函数"><a href="#2-1-核函数" class="headerlink" title="2.1 核函数"></a>2.1 核函数</h3><p>&emsp;常见的基本核函数（kernel function）有径向基函数核、周期核、线性核、常数核等。这些核函数都有各自的特性，比如径向基函数核为平稳核，协方差矩阵只取决于随机变量的相对位置；周期核函数顾名思义具有周期性，协方差矩阵沿对角线将会出现规律性分布。本章采取的核函数为径向基函数核：</p>
+<script type="math/tex; mode=display">k_{u u}\left(x, x^{\prime} ; \theta\right)=\sigma^{2} \exp \left(-\frac{1}{2} \sum_{i=1}^{N} w_{i}\left(x_{i}-x_{i}^{\prime}\right)^{2}\right)</script><p>上式中, $\theta=\left(\sigma, w_{d}^{i}\right)$ 为核函数的超参数（hyper parameter），$w_{d}$ 为自动相关确定权重（Automatic Relevance Determination, 简称ARD）。直观上$w_{i}$ 影响高斯分布的平滑程度，超参数 σ 将影响高斯分布与均值之间的距离.  </p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1c.jpg"> <img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.1d.jpg">
+</div>
+
+<p>&emsp;如图，淡蓝色区间为高斯过程的置信区间，蓝色实现为高斯过程的均值分布。可以看出随着$w_{i}$的增加，高斯过程更加平滑；随着超参数σ的减小，高斯过程分布更加集中。<br>&emsp; 利用高斯过程在贝叶斯最大化后验概率中学习超参数的值，该方法采用L-BFGS算法求解对数边缘似然的最大值，也就是：</p>
+<script type="math/tex; mode=display">\max \left\{\log p(y \mid \phi, \theta)=\frac{1}{2} \log |K|+\frac{1}{2} y^{T} K^{-1} y+\frac{N}{2} \log (2 \pi)\right\}</script><p>&emsp; 需要说明的是，后验概率随超参数的分布是一个非凸问题，如果优化初值设置不合理，会陷入局部最优，且在没有先验知识的情况下难以对超参数的初值进行估计与调整，目前常用的有效方法还是通过改变初值重复计算来尽量找寻最优解。此时观察可知，核函数 K 的计算是整个问题的核心所在。</p>
+<h3 id="2-2-一维扩散方程"><a href="#2-2-一维扩散方程" class="headerlink" title="2.2 一维扩散方程"></a>2.2 一维扩散方程</h3><p>由菲克定律，渗透扩散问题的线性偏微分微分方程的形式为：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+f(x, t)=\mathcal{L}_{x}^{D} u=0 \\
+\mathcal{L}_{x}^{D}=\frac{\partial}{\partial t}-D \frac{\partial^{2}}{\partial x^{2}}
+\end{array}</script><p>若假设函数 𝑢 是一个高斯过程：</p>
+<script type="math/tex; mode=display">u \sim \mathcal{G} \mathcal{P}\left(\mu(x)=0, k_{u u}(x, x)\right)</script><p>那么函数 𝑢 经过线性过程得到的函数 𝑓(𝑥,𝑡) 也是一个高斯过程：</p>
+<script type="math/tex; mode=display">f \sim \mathcal{G} \mathcal{P}\left(\mu(x)=0, k_{f f}(x, x)\right)</script><p>核函数 $k_{u u}(x, x)$ 与核函数 $k_{f f}(x, x)$ 之间的关系为：</p>
+<script type="math/tex; mode=display">k_{f f}(x 1, x 2)=\mathcal{L}_{x 1}^{D} \mathcal{L}_{x 2}^{D} k_{u u}(x 1, x 2)</script><p>$k_{f f}(x, x)$描述了函数 𝑓 与函数 𝑓 之间的分布关系，同样的函数 𝑓 与函数 𝑢 的关系，函数 𝑢 与函数 𝑓 的关系可以表示为：</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+k_{f u}(x 1, x 2)=\mathcal{L}_{x 1}^{D} k_{u u}(x 1, x 2) \\
+k_{u f}(x 1, x 2)=\mathcal{L}_{x 2}^{D} k_{u u}(x 1, x 2)
+\end{array}</script><p>此时考虑函数 𝑓 与函数 𝑢 的联合分布𝑋=[𝑓,𝑢]，𝑋服从高斯分布，其协方差矩阵为：</p>
+<script type="math/tex; mode=display">K=\left[\begin{array}{cc}
+k_{u u}+\sigma_{u} & k_{u f} \\
+k_{f u} & k_{f f}+\sigma_{f}
+\end{array}\right]</script><p>其中，$\sigma_{u}$、$\sigma_{f}$ 为函数 𝑢 与函数 𝑓 的采样噪声估计，不难看出，若 $k_{u u}$采用上述的径向基核函数，那么上式的超参数为：</p>
+<script type="math/tex; mode=display">\theta=\left(D, \sigma, w_{i}, \sigma_{u,}, \sigma_{f}\right)</script><p>至此，计算得到了一维扩散问题的核函数K，结合上一节，通过超参数优化过程，可以求解最合理的扩散系数D，完成扩散方程的参数学习。</p>
+<h3 id="2-3-处理细节"><a href="#2-3-处理细节" class="headerlink" title="2.3 处理细节"></a>2.3 处理细节</h3><p>&emsp; 到目前为止，理论上能够计算抛物线型微分方程中的系数，但是离代码实现与工程应用还有两点细节处理，一个是核函数的代码计算方式在参数传递之后变得尤为复杂，另一个是回归过程的采样数据难以获取（很难测得渗透内部的时刻浓度）。</p>
+<h4 id="2-3-1-理论模型修改"><a href="#2-3-1-理论模型修改" class="headerlink" title="2.3.1 理论模型修改"></a>2.3.1 理论模型修改</h4><p>&emsp; 用 Fick定律进行分析对原微分方程进行改造以适合工程实际。</p>
+<script type="math/tex; mode=display">\begin{array}{l}
+\because J=-D \frac{\partial C}{\partial x} \quad \therefore \quad \frac{\partial J}{\partial t}=-D \frac{\partial^{2} C}{\partial x \partial t} \\
+\therefore \quad \frac{\partial^{2} J}{\partial x^{2}}=\frac{\partial}{\partial x}\left(\frac{\partial J}{\partial x}\right)=\frac{\partial}{\partial x}\left(-D \frac{\partial^{2} C}{\partial x^{2}}\right)
+\end{array}</script><p>带入Fick第二定律中有：</p>
+<script type="math/tex; mode=display">\frac{\partial^{2} J}{\partial x^{2}}=\frac{\partial}{\partial x}\left(-D \frac{1}{D} \frac{\partial C}{\partial t}\right)=-\frac{\partial^{2} C}{\partial x \partial t}</script><p>对比可以得到：</p>
+<script type="math/tex; mode=display">\frac{\partial J}{\partial t}-D \frac{\partial^{2} J}{\partial x^{2}}=0</script><p>此时，原微分方程转化为：</p>
+<script type="math/tex; mode=display">\mathcal{L}_{x}^{D}=\frac{\partial}{\partial t}-D \frac{\partial^{2}}{\partial x^{2}} \quad u=J</script><p>&emsp;工程实际中，出口的渗透速率容易测量，此时整个扩散问题的处理方法才具备应用价值。</p>
+<h4 id="2-3-2-核函数计算"><a href="#2-3-2-核函数计算" class="headerlink" title="2.3.2 核函数计算"></a>2.3.2 核函数计算</h4><p>&emsp;笔者在代码实现过程中，尝试过用计算微分的函数包简化核函数计算，遗憾未实现（看官有好的建议一定一定告诉我！），故而一定程度上简化原核函数并采取暴力计算，公式推导结果如下：</p>
+<script type="math/tex; mode=display">k_{u u}=\sigma^{2} \exp \left(-\frac{d^{2}}{2 l_{x, t}^{2}}\right)=k, d^{2}=\left(x-x^{\prime}\right)^{2}+\left(t-t^{\prime}\right)^{2}</script><script type="math/tex; mode=display">\left\{\begin{array}{c}
+k_{u f}=\frac{\partial k}{\partial t^{\prime}}-D \frac{\partial^{2} k}{\partial x^{\prime 2}} \\
+k_{f u}=\frac{\partial k}{\partial t}-D \frac{\partial^{2} k}{\partial x^{2}} \\
+k_{f f}=\frac{\partial^{2} k}{\partial t \partial t^{\prime}}-D\left(\frac{\partial^{3} k}{\partial x^{2} \partial t^{\prime}}+\frac{\partial^{3} k}{\partial x^{\prime 2} \partial t}\right)+D^{2} \frac{\partial^{4} k}{\partial x^{2} \partial x^{\prime 2}}
+\end{array}\right.</script><p>上述式子中，笔者计算的各阶偏导数为：</p>
+<script type="math/tex; mode=display">\frac{\partial k}{\partial t}=-\frac{\partial k}{\partial t^{\prime}}=-k \frac{t-t^{\prime}}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{2} k}{\partial x^{2}}=\frac{\partial^{2} k}{\partial x^{\prime 2}}=k\left(\frac{x-x^{\prime}}{l_{x}^{2}}\right)^{2}-\frac{k}{l_{x}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{2} k}{\partial t \partial t^{\prime}}=-k\left(\frac{t-t^{\prime}}{l_{t}^{2}}\right)^{2}+\frac{k}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{3} k}{\partial x^{2} \partial t^{\prime}}=-\frac{\partial^{3} k}{\partial x^{\prime 2} \partial t}=k\left[\left(\frac{x-x^{\prime}}{l_{x}^{2}}\right)^{2}-\frac{1}{l_{x}^{2}}\right] \frac{t-t^{\prime}}{l_{t}^{2}}</script><script type="math/tex; mode=display">\frac{\partial^{4} k}{\partial x^{2} \partial x^{\prime 2}}=k\left[\frac{\left(x-x^{\prime}\right)^{4}}{l_{x}^{6}}-\frac{6\left(x-x^{\prime}\right)^{2}}{l_{x}^{6}}+\frac{3}{l_{x}^{6}}\right]</script><p>此时，超参数为：$\theta=\left(D, \sigma, l_{x}, l_{t}, \sigma_{u, f}\right)$</p>
+<h3 id="2-4-代码实现结果"><a href="#2-4-代码实现结果" class="headerlink" title="2.4 代码实现结果"></a>2.4 代码实现结果</h3><p>&emsp;笔者迁移 sklearn 中高斯过程的实现模式，模仿其接口风格，完成了适用于RBF核为基本核，线性算子为上文中 $\mathcal{L}_{x}^{D}$ 的高斯过程回归(二维)。代码整理后将发布到 github，或者欢迎邮件联系。</p>
+<h4 id="2-4-1-超参数取值空间优化"><a href="#2-4-1-超参数取值空间优化" class="headerlink" title="2.4.1 超参数取值空间优化"></a>2.4.1 超参数取值空间优化</h4><p>&emsp; 前文已述，超参数优化是个非凸问题，而核函数计算又比较复杂，初值选取不当很容易导致优化问题无解，所以笔者先用控制变量法手动调节超参数学习初始值，凭借一定经验判断较为合理的超参数优化区间，如下图可观察优化过程：</p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.2.jpg">  
+</div>
+
+<p>图中（a）到（b）优化了长度尺寸超参数 $𝑙_{𝑥}$ ，由（b）到（c）优化了时间尺寸超参数 $𝑙_{𝑡}$ ，由（c）到（d）优化了增益 𝜎 与噪声评价超参数 $\sigma_{u, f}$。如图可见，随着超参数优化区间的调整，拟合曲面逐渐平坦且合理，虽然依照经验调整无法达到最优区间甚至导致过拟合，但是作为超参数的取值区间，只要后续超参数优化时不碰到区间边界即可减少主观影响。超参数优化过程可继续深入研究。</p>
+<h4 id="2-4-2-高斯过程预测"><a href="#2-4-2-高斯过程预测" class="headerlink" title="2.4.2 高斯过程预测"></a>2.4.2 高斯过程预测</h4><p>&emsp; 高斯过程回归经过参数优化之后，能够对核函数影响区间内的采样点做出预测，预测原理为通过训练点计算后验概率，若只关注微分方程中的系数其实不用进行预测，但是高斯过程预测能够直观观察回归情况，计算方式为：</p>
+<script type="math/tex; mode=display">u_{p} \sim \mathcal{N}\left(\bar{u}_{p}, s_{u}^{2}\right)</script><script type="math/tex; mode=display">\bar{u}_{p}=P K^{-1} Y, \quad s_{u}^{2}=k_{u u}\left(x_{p}, x_{p}\right)-P K^{-1} P^{T}</script><p>式中：$P=\left[k_{u u}\left(x_{p}, x_{u}\right) \quad k_{u f}\left(x_{p}, x_{f}\right)\right]$ ,&emsp;$Y=\left[u\left(x_{u}\right) f\left(x_{f}\right)\right]$</p>
+<p>&emsp;通过差分仿真获取微分方程理论数据进行回归对比，随机采样扩散前期数据（40 points）进行学习，得到的回归预测分布如图：</p>
+<div align="center">
+<img src="/2020/07/02/%E9%AB%98%E6%96%AF%E8%BF%87%E7%A8%8B%E5%9B%9E%E5%BD%92%E6%B5%85%E6%9E%90/2.3.jpg">  
+</div>
+
+<p>图中微分方程系数的学习误差为 3.7%，有不错的精度。</p>
+<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>&emsp;直接的高斯过程回归目前已经发展的相对成熟，应用范围广，主要是形式好看十分吸引笔者。此处推荐两本相对容易入门的书（我也只看了一点）  </p>
+<p><em>推荐阅读</em><br><em>C.E. Rasmussen. Gaussian processes in machine learning.</em><br><em>K.P. Murphy. Machine learning: a probabilistic perspective.</em>  </p>
+<p>&emsp;按照论文，笔者基本实现Raissi方法。由于初值选取有点玄，我调参经验也不是很足，不能达到Raissi（2017）中同样方程的精度，此外有以下不足：  </p>
+<ul>
+<li>计算精度严重依赖初值，并且容易陷入局部最优，奇异矩阵中断求解等情况。Raissi在文中也提到采用合适的数据能得到很好的处理结果。所以我对这种方法的工程实际应用存疑，对论文中极其理想的结果也有一定怀疑。  </li>
+<li>对于不同的方程，核函数的计算要重新构造，需要新的计算方式简化核函数的微分。</li>
+<li>直接的高斯过程能够实现采样点覆盖范围内的预测，但是在远离采样的地方，难以影响协方差矩阵，笔者认为原理上是不能实现有效预测的，要实现前期样本预测后期数据分布等功能，需要加入如Raissi方法依赖的微分方程等先验知识。</li>
+</ul>
+<p>此外，高斯过程计算空间复杂度较高，实现大样本的高斯过程回归有助于提高模型稳定性，可继续研究。</p>
+]]></content>
+      <categories>
+        <category>Study</category>
+      </categories>
+      <tags>
+        <tag>Gaussian process</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2020/07/01/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
 <h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
 <h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
 <p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
 <h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
 ]]></content>
   </entry>
