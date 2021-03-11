@@ -7,36 +7,32 @@
 table {
 margin: auto;
 }
-</style> 
+</style>
 
 <p>&emsp;  在《数论概论》中，关于本原勾股数组有这样一道练习题：</p>
 <div align="center">
 <img src="/%E7%9B%B8%E5%90%8C%E5%BC%A6%E9%95%BF%E7%9A%84%E6%9C%AC%E5%8E%9F%E5%8B%BE%E8%82%A1%E6%95%B0%E7%BB%84%E6%95%B0%E5%88%86%E5%B8%83%E8%A7%84%E5%BE%8B%E5%88%9D%E6%8E%A2/0_1.jpg">
 </div>
 
-<p>&emsp; 题意为：对于本原勾股数组，当弦长 $c$ 取何值时，可以分解为多组本原勾股数 $(a_i,b_i)$。进一步，本原勾股数的组数 $\phi(c)$ 的分布规律如何。</p>
+<p>&emsp; 题意为：对于本原勾股数组，当弦长 $c$ 取何值时，可以分解为多组本原勾股数 $(a_i,b_i)$。进一步，分析本原勾股数的组数 $\phi(c)$ 的分布规律。</p>
 <p>&emsp; 本文利用最基本的数论求解上述问题，不够严谨，仅为兴趣探讨。</p>
 <a id="more"></a>
-<h2 id="1-本原勾股数组简介"><a href="#1-本原勾股数组简介" class="headerlink" title="1 本原勾股数组简介"></a>1 本原勾股数组简介</h2><p>&emsp; 详见相关初等数论书籍，一般的，称<strong>最大公因数</strong>为1的勾股数组为本原勾股数组，即：当且仅当 $(a,b,c)=1$时，称勾股数组 $a,b,c$ 为一组本原勾股数组。  </p>
-<p>&emsp; 本原勾股数组的勾股关系可用下式表示：</p>
-<script type="math/tex; mode=display">
-\left\{\begin{array}{l}
+<h2 id="1-本原勾股数组简介"><a href="#1-本原勾股数组简介" class="headerlink" title="1 本原勾股数组简介"></a>1 本原勾股数组简介</h2><p>&emsp; 详见相关初等数论书籍，一般的，称<strong>最大公因数</strong>为1的勾股数组为本原勾股数组，即：当且仅当 $(a,b,c)=1$时，称勾股数组 $a,b,c$ 为一组本原勾股数组。<br>&emsp; 本原勾股数组的勾股关系可用下式表示：</p>
+<script type="math/tex; mode=display">\left\{\begin{array}{l}
 a=s\cdot t \\
 b=(s^{2}-t^{2})/2 \\
 c=(s^{2}+t^{2})/2 \tag{0}
 \end{array}\right.</script><p>&emsp; 式中，$s,t$ 为互质的奇数，并不妨令$s&gt;t$。<br>&emsp; 此外，观察表达式容易发现一些基本事实，例如 $2\mid b$，$c^2 \equiv 1mod(4)$ 等等。</p>
-<h2 id="2-问题的求解"><a href="#2-问题的求解" class="headerlink" title="2 问题的求解"></a>2 问题的求解</h2><p><br> </p>
-<h3 id="2-1-一个引理"><a href="#2-1-一个引理" class="headerlink" title="2.1 一个引理"></a>2.1 一个引理</h3><p><br> </p>
-<p><em>引理：对于奇素数 $p$，当且仅当$p\equiv 1mod(4)$时，$p$可以<strong>唯一</strong>的分解为两个整数的平方和。即 $p=u^2+v^2$</em></p>
-<p>&emsp; 该引理可以分为两个部分进行证明，一个部分是$p\equiv 1mod(4)$与$p$可分解的<strong>充要性</strong>，另一个是 $p$ 分解为两数平方和的<strong>唯一性</strong>。  </p>
-<p>&emsp; 关于前者充要性，其必要性是显然的，充分性常用二次剩余结合费马下降法证明。（$(\frac{-1}{p})=1$）<br>&emsp;对于后者唯一性，不同参考书目中也有相关证明，本文推导的唯一性证明如下：</p>
+<h2 id="2-问题的求解"><a href="#2-问题的求解" class="headerlink" title="2 问题的求解"></a>2 问题的求解</h2><p><br></p>
+<h3 id="2-1-一个引理"><a href="#2-1-一个引理" class="headerlink" title="2.1 一个引理"></a>2.1 一个引理</h3><p><em>引理：对于奇素数 $p$，当且仅当$p\equiv 1mod(4)$时，$p$可以<strong>唯一</strong>的分解为两个整数的平方和。即 $p=u^2+v^2$</em></p>
+<p>&emsp; 该引理可以分为两个部分进行证明，一个部分是$p\equiv 1mod(4)$与$p$可分解的<strong>充要性</strong>，另一个是 $p$ 分解为两数平方和的<strong>唯一性</strong>。<br>&emsp; 关于前者充要性，其必要性是显然的，充分性常用二次剩余结合费马下降法证明。（$(\frac{-1}{p})=1$）<br>&emsp; 对于后者唯一性，不同参考书目中也有相关证明，本文推导的唯一性证明如下：</p>
 <p>&emsp; 假设素数 $p$ 可以分解成两组不同的整数的平方和，即：</p>
-<script type="math/tex; mode=display">p=u_1^2+v_1^2=u_2^2+v_2^2</script><p>&emsp;上式中不妨设 $u_1&gt;u_2&gt;v_2&gt;v_1&gt;0$，那么有(1)式为：</p>
+<script type="math/tex; mode=display">p=u_1^2+v_1^2=u_2^2+v_2^2</script><p>&emsp; 上式中不妨设 $u_1&gt;u_2&gt;v_2&gt;v_1&gt;0$，那么有(1)式为：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
 p^2 &=(u_1^2+v_1^2)(u_2^2+v_2^2)\\
 &=(u_1u_2+v_1v_2)^2+(u_1v_2-u_2v_1)^2\\
-&=(u_1v_2+u_2v_1)^2+(u_1u_2-v_1v_2)^2  
+&=(u_1v_2+u_2v_1)^2+(u_1u_2-v_1v_2)^2  \ \ (1)
 \end{aligned}</script><p>&emsp; 将(1)中平方项因子提取相乘构造$M$，可以发现：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
@@ -53,47 +49,46 @@ M &= (u_1u_2+v_1v_2)(u_1u_2-v_1v_2)(u_1v_2+u_2v_1)(u_1v_2-u_2v_1)\\
 p&\mid (u_1u_2+v_1v_2)\ or\\
 p&\mid (u_1u_2-v_1v_2)\ or\\
 p&\mid (u_1v_2+u_2v_1)\ or\\
-p&\mid (u_1v_2-u_2v_1) 
-\end{aligned}</script><p>&emsp; 又由(1)可知：</p>
+p&\mid (u_1v_2-u_2v_1)  \ \ \  (2)
+\end{aligned}</script><p>&emsp; 又由(1)可知：  </p>
 <script type="math/tex; mode=display">
-p\ge(u_1u_2+v_1v_2),(u_1u_2-v_1v_2),(u_1v_2+u_2v_1),(u_1v_2-u_2v_1)  \tag{3}</script><p>&emsp; 对比(2)、(3)式可知：</p>
+p\ge(u_1u_2+v_1v_2),(u_1u_2-v_1v_2),(u_1v_2+u_2v_1),(u_1v_2-u_2v_1)  \tag{3}</script><p>&emsp; 对比(2)、(3)式可知：  </p>
 <script type="math/tex; mode=display">
 \left\{\begin{array}{r}
 u_1u_2+v_1v_2=p \\
 u_1v_2-u_2v_1=0
-\end{array}\right.</script><p>&emsp; 或者：</p>
-<script type="math/tex; mode=display">
+\end{array}\right.
+or \ 
 \left\{\begin{array}{r}
 u_1v_2+u_2v_1=p\\
-u_1u_2-v_1v_2=0 
+u_1u_2-v_1v_2=0
 \end{array}\right.</script><p>&emsp; 以上两式都可以得到 $u_1=u_2, v_1=v_2$。至此素数 $p$ 分解的唯一性得证。</p>
-<h3 id="2-2-c-的规律"><a href="#2-2-c-的规律" class="headerlink" title="2.2 $c$ 的规律"></a>2.2 $c$ 的规律</h3><p><br> </p>
+<h3 id="2-2-c-的规律"><a href="#2-2-c-的规律" class="headerlink" title="2.2 $c$ 的规律"></a>2.2 $c$ 的规律</h3><p><br></p>
 <p>&emsp; 前已说明 $c$ 是奇数，现在将 $c$ 质因数分解：</p>
-<script type="math/tex; mode=display">c=\prod_{i=1}^n p_i^{\alpha_i}\prod_{j=1}^m q_i^{\beta_i} \tag{4}</script><p>&emsp; 上式中 $p_i\equiv 1mod(4)$ ，$q_i\equiv -1mod(4)$ 为 $c$ 的质因子，$\alpha_i$，$\beta_i$ 为对应质因子的次数。  </p>
-<p>&emsp; 对于本原勾股数组中 $c$ ，接下来说明两个结论（非严格论证，絮絮叨叨）： </p>
+<script type="math/tex; mode=display">c=\prod_{i=1}^n p_i^{\alpha_i}\prod_{j=1}^m q_i^{\beta_i} \tag{4}</script><p>&emsp; 上式中 $p_i\equiv 1mod(4)$ ，$q_i\equiv -1mod(4)$ 为 $c$ 的质因子，$\alpha_i$，$\beta_i$ 为对应质因子的次数。<br>&emsp; 对于本原勾股数组中 $c$ ，接下来说明两个结论（非严格论证，絮絮叨叨）：</p>
 <ul>
 <li>本原勾股数组要求 $c$ 中没有 $q_i$项，$c$ 全部由 $\equiv 1mod(4)$的 $p_i$ 构成。  </li>
 <li>$c$ 能够分解出的本原勾股数组的组数 $\phi(c)=2^{n-1}$，和指数 $\alpha_i$ 无关。</li>
 </ul>
-<p>&emsp; 对于结论1，首先利用 $c=(s^{2}+t^{2})/2$，并对 $s,t$ 模8分析可知 $c\equiv 1mod(4)$（ 这一点也可以用 $a=2mn;\ b=m^2-n^2;\ c=m^2+n^2$得到 ）。所以<strong>对于非本原勾股数组要求 $2\mid \beta_i$</strong>，而对于本原勾股数组，从后面的分解构造过程可以发现 $\beta_i=0$。</p>
-<p>&emsp; 对于结论2，首先说明 $p_i^{\alpha_i}$能够分解的本原组数和 $p_i$相同：当${\alpha_i}\le2$ 时，结论显然；当${\alpha_i}&gt;3$ 时，类似于引理的证明可知本原的分解唯一（ 否则 $a,b$ 应同为 $p_i$ 的倍数 ）。<br>其次说明 $\alpha_i=1$ 时 $\phi(c)=2^{n-1}$ 与本原勾股数组的分解构造过程：</p>
-<p>&emsp;  令： $p_i=u_i^2+v_i^2$，$c_{k}=a_k^2+b_k^2$，且 $c_{1}=p_1=u_1^2+v_1^2$，则有（*）为：</p>
+<p>&emsp; 对于结论1，首先利用 $c=(s^{2}+t^{2})/2$，并对 $s,t$ 模8分析可知 $c\equiv 1mod(4)$（ 这一点也可以用 $a=2mn;\ b=m^2-n^2;\ c=m^2+n^2$ 得到 ）。所以<strong>对于非本原勾股数组要求 $2\mid \beta_i$</strong>，而对于本原勾股数组，从后面的分解构造过程可以发现 $\beta_i=0$。<br>&emsp; 对于结论2，首先说明 $p_i^{\alpha_i}$能够分解的本原组数和 $p_i$相同：当${\alpha_i}\le2$ 时，结论显然；当${\alpha_i}&gt;3$ 时，类似于引理的证明可知本原的分解唯一（ 否则 $a,b$ 应同为 $p_i$ 的倍数 ）。<br>&emsp; 其次说明 $\alpha_i=1$ 时 $\phi(c)=2^{n-1}$ 与本原勾股数组的分解构造过程：</p>
+<p>&emsp;  由引理，对于模4余1的素数 $p_i$ 可令： $p_i=u_i^2+v_i^2$，<br>&emsp;  设 $c_{k}=a_k^2+b_k^2$，且 $c_{1}=p_1=u_1^2+v_1^2$，则有（*）为：</p>
 <script type="math/tex; mode=display">
 \begin{aligned}
 c_{k}=c_{k-1}p_k &=(a_{k-1}^2+b_{k-1}^2)(u_k^2+v_k^2) \\
 &=(a_{k-1}u_k+b_{k-1}v_k)^2+(a_{k-1}v_k-u_kb_{k-1})^2\\
 &=(a_{k-1}v_k+u_kb_{k-1})^2+(a_{k-1}u_k-b_{k-1}v_k)^2  
-\end{aligned}</script><p>&emsp; 也就是：</p>
+\end{aligned}</script><p>&emsp; 对比也就有：</p>
 <script type="math/tex; mode=display">
 \left\{\begin{array}{r}
 a_k=a_{k-1}u_k+b_{k-1}v_k \\
 b_k=a_{k-1}v_k-b_{k-1}u_k
-\end{array}\right.</script><script type="math/tex; mode=display">or</script><script type="math/tex; mode=display">
+\end{array}\right.
+or \ 
 \left\{\begin{array}{r}
 a_k=a_{k-1}v_k+b_{k-1}u_k \\
 b_k=a_{k-1}u_k-b_{k-1}v_k
-\end{array}\right.</script><p>&emsp; 最后得到 $c_{n}=a_n^2+b_n^2$</p>
-<p>&emsp; 上述各式即为本文所述<strong><em>本原勾股数组分解构造过程</em></strong>，$p_i$的每一次相乘都有两种不同的 $(a_k,b_k)$，并且有 $(a_k,b_k)=1$</p>
+\end{array}\right.</script><p>&emsp; 对于 $k=1 \sim n-1$ 重复上诉过程，最后得到 $c_{n}=a_n^2+b_n^2$ 。</p>
+<p>&emsp; 上述即为本文所述<strong>本原勾股数组分解构造过程</strong>，$p_i$的每一次相乘都有两种不同的 $(a_k,b_k)$，并且有 $(a_k,b_k)=1$，总共进行 $n-1$ 次乘法，故最后 $(a_n,b_n)$ 有 $\phi(c)=2^{n-1}$ 种可能。（通过构造过程可知$(a_{1\sim n},b_{1\sim n})$ 互不相同）</p>
 <h3 id="2-3-小尾巴与结论"><a href="#2-3-小尾巴与结论" class="headerlink" title="2.3 小尾巴与结论"></a>2.3 小尾巴与结论</h3><p><strong>小尾巴：</strong><br>&emsp; 对比 $c_{n}=a_n^2+b_n^2$ 和 $2c=(s^{2}+t^{2})$ 仍有区别，此时将 $2 = 1^2+1^2$ 带入（*）中即可得到</p>
 <script type="math/tex; mode=display">
 \left\{\begin{array}{r}
@@ -111,37 +106,38 @@ t=a_{n}-b_{n}
 <li>本文证明只涉及初等代数及数论，稍显冗杂。</li>
 <li>markdown中公式表格的渲染还是弱了点。。另外整理时间较短，有点乱，废话有点多。</li>
 </ol>
-<h2 id="3-程序验证"><a href="#3-程序验证" class="headerlink" title="3 程序验证"></a>3 程序验证</h2><p>&emsp; Matlab 验证一下，程序参下：<br><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">clear</span><br><span class="line">clc</span><br><span class="line"></span><br><span class="line">maxc &#x3D;100000; %搜索的长度</span><br><span class="line">con_in &#x3D; zeros(maxc,33); % 组数容量32（可以估算）</span><br><span class="line"></span><br><span class="line">for c &#x3D; 1:maxc     </span><br><span class="line">    % s^2+t^2 &#x3D; 2c</span><br><span class="line">    %s 的搜索区间为（[sqrt(2c)]~[sqrt(c)]）   </span><br><span class="line">    lb &#x3D; floor(sqrt(c));</span><br><span class="line">    rb &#x3D; floor(sqrt(2*c));</span><br><span class="line">    for s &#x3D; lb:rb</span><br><span class="line">        t &#x3D; sqrt(2*c-s^2);</span><br><span class="line">        if (rem(t,2) &#x3D;&#x3D; 1)&amp;&amp;(gcd(s,t) &#x3D;&#x3D; 1)</span><br><span class="line">            con_in(c,1) &#x3D; con_in(c,1)+1;</span><br><span class="line">            con_in(c,2*(con_in(c,1))) &#x3D; s;</span><br><span class="line">            con_in(c,2*(con_in(c,1))+1) &#x3D; t;           </span><br><span class="line">        end</span><br><span class="line">    end  </span><br><span class="line">end</span><br><span class="line">[num,ia,index] &#x3D; unique(con_in(:,1));</span><br><span class="line"></span><br><span class="line">% num   为&#x2F;phi(c)的取值范围，</span><br><span class="line">% ia    为&#x2F;phi(c)对应的最小c值。</span><br><span class="line">%</span><br><span class="line">% con_in 行号为c，第一列为对应的本原勾股数组组数</span><br><span class="line">%                 第二列开始，每两列分别为一组的s,t</span><br></pre></td></tr></table></figure></p>
+<h2 id="3-程序验证"><a href="#3-程序验证" class="headerlink" title="3 程序验证"></a>3 程序验证</h2><p>&emsp; Matlab 验证，程序参下：</p>
+<figure class="highlight matlab"><table><tr><td class="code"><pre><span class="line"><span class="comment">% num   为/phi(c)的取值范围，</span></span><br><span class="line"><span class="comment">% ia    为/phi(c)对应的最小c值。</span></span><br><span class="line"><span class="comment">%</span></span><br><span class="line"><span class="comment">% con_in 行号为c，第一列为对应的本原勾股数组组数</span></span><br><span class="line"><span class="comment">%                 第二列开始，每两列分别为一组的s,t</span></span><br><span class="line"></span><br><span class="line">clear</span><br><span class="line">clc</span><br><span class="line"></span><br><span class="line">maxc =<span class="number">100000</span>; <span class="comment">%搜索的长度</span></span><br><span class="line">con_in = <span class="built_in">zeros</span>(maxc,<span class="number">33</span>); <span class="comment">% 组数容量32（可以估算）</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> c = <span class="number">1</span>:maxc     </span><br><span class="line">    <span class="comment">% s^2+t^2 = 2c</span></span><br><span class="line">    <span class="comment">%s 的搜索区间为（[sqrt(2c)]~[sqrt(c)]）   </span></span><br><span class="line">    lb = <span class="built_in">floor</span>(<span class="built_in">sqrt</span>(c));</span><br><span class="line">    rb = <span class="built_in">floor</span>(<span class="built_in">sqrt</span>(<span class="number">2</span>*c));</span><br><span class="line">    <span class="keyword">for</span> s = lb:rb</span><br><span class="line">        t = <span class="built_in">sqrt</span>(<span class="number">2</span>*c-s^<span class="number">2</span>);</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">rem</span>(t,<span class="number">2</span>) == <span class="number">1</span>)&amp;&amp;(<span class="built_in">gcd</span>(s,t) == <span class="number">1</span>)</span><br><span class="line">            con_in(c,<span class="number">1</span>) = con_in(c,<span class="number">1</span>)+<span class="number">1</span>;</span><br><span class="line">            con_in(c,<span class="number">2</span>*(con_in(c,<span class="number">1</span>))) = s;</span><br><span class="line">            con_in(c,<span class="number">2</span>*(con_in(c,<span class="number">1</span>))+<span class="number">1</span>) = t;           </span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span>  </span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line">[num,ia,index] = unique(con_in(:,<span class="number">1</span>));</span><br></pre></td></tr></table></figure>
 <p>&emsp; 最后结果与前推导相符 :</p>
 <div class="table-container">
 <table>
 <thead>
 <tr>
-<th style="text-align:center">c</th>
-<th style="text-align:center">$p_i$</th>
 <th style="text-align:center">本原勾股组数</th>
+<th style="text-align:center">最小的c</th>
+<th style="text-align:center">$p_i$</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="text-align:center">5</td>
-<td style="text-align:center">5</td>
 <td style="text-align:center">1</td>
+<td style="text-align:center">5</td>
+<td style="text-align:center">5</td>
 </tr>
 <tr>
+<td style="text-align:center">2</td>
 <td style="text-align:center">65</td>
 <td style="text-align:center">5x13</td>
-<td style="text-align:center">2</td>
 </tr>
 <tr>
+<td style="text-align:center">4</td>
 <td style="text-align:center">1105</td>
 <td style="text-align:center">5x13x17</td>
-<td style="text-align:center">4</td>
 </tr>
 <tr>
+<td style="text-align:center">8</td>
 <td style="text-align:center">32045</td>
 <td style="text-align:center">5x13x17x29</td>
-<td style="text-align:center">8</td>
 </tr>
 </tbody>
 </table>
